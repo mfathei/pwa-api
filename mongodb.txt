@@ -5,6 +5,7 @@ use bookstore;
 show collections;
 db.createCollection('books');
 db.createCollection('genres');
+db.createCollection('posts');
 show collections;
 db.genres.insert({name: 'Suspense'});
 db.genres.find();
