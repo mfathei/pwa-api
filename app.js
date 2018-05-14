@@ -5,6 +5,10 @@ var bodyParser = require("body-parser");
 var mongoose = require("mongoose");
 
 var Genre = require('./models/genre');
+var Book = require('./models/book');
+
+// to parse body for POST requests
+app.use(bodyParser.json());
 
 // Connect to Mongoose
 mongoose.connect("mongodb://localhost/bookstore");
@@ -25,6 +29,44 @@ app.get('/api/genres', function(req, res){
     });
 });
 
+app.get('/api/genres/:_id', function(req, res){
+    Genre.getGenreById(req.params._id, function(err, genre){
+        if(err){
+            throw err;
+        }
+        res.json(genre);
+    });
+});
+
+app.post('/api/genres', function(req, res){
+    var genre = req.body;
+    Genre.addGenre(genre, function(err, genre){
+        if(err){
+            throw err;
+        }
+        res.json(genre);
+    });
+});
+
+// ============= books ================
+
+app.get('/api/books', function(req, res){
+    Book.getBooks(function(err, books){
+        if(err){
+            throw err;
+        }
+        res.json(books);
+    });
+});
+
+app.get('/api/books/:_id', function(req, res){
+    Book.getBookById(req.params._id, function(err, book){
+        if(err){
+            throw err;
+        }
+        res.json(book);
+    });
+});
 
 app.listen(3000);
 console.log("Running on port 3000...");
