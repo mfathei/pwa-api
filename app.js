@@ -5,6 +5,7 @@ var bodyParser = require("body-parser");
 var mongoose = require("mongoose");
 var formidable = require('formidable');
 var fs = require('fs');
+var fsextra = require('fs-extra');
 
 var Genre = require('./models/genre');
 var Book = require('./models/book');
@@ -19,6 +20,9 @@ app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
+
+var imageRealtivePath = '/mnt/f/PROGRAMMING/Progressive web apps/WORK/pwa-guide/public/upload/photos/';
+var imagePath = '/upload/photos/';
 
 // Connect to Mongoose
 mongoose.connect("mongodb://localhost/bookstore");
@@ -54,8 +58,9 @@ app.post('/api/posts', function (req, res) {
     var form = new formidable.IncomingForm();
     form.parse(req, function (err, fields, files) {
         var oldpath = files.file.path;
-        var newpath = '/tmp/pwa-api/' + files.file.name;
-        fs.rename(oldpath, newpath, function (err) {
+        // var newpath = '/data/pwa-api/' + files.file.name;
+        var newpath = imageRealtivePath + files.file.name;
+        fsextra.move(oldpath, newpath, function (err) {
             if (err) throw err;
             // res.write('File uploaded and moved!');
             // res.end();
@@ -65,9 +70,9 @@ app.post('/api/posts', function (req, res) {
             id: fields.id,
             title: fields.title,
             location: fields.location,
-            image: '/src/images/sf-boat.jpg'// encodeURIComponent(file.name)
+            image: imagePath + files.file.name// encodeURIComponent(file.name)
         };
-        console.log('post', post);
+        // console.log('post', post);
         Post.addPost(post, function (err, post) {
             if (err) {
                 throw err;
