@@ -9,6 +9,7 @@ var fs = require('fs');
 var Genre = require('./models/genre');
 var Book = require('./models/book');
 var Post = require('./models/post');
+var Subscription = require('./models/subscription');
 
 // to parse body for POST requests
 app.use(bodyParser.json());
@@ -100,6 +101,58 @@ app.delete('/api/posts/:_id', function (req, res) {
 
 app.post('/api/storePostData', function (req, res) {
 
+});
+
+
+// ============= subscriptions ================
+
+app.get('/api/subscriptions', function (req, res) {
+    Subscription.getSubscriptions(function (err, subscriptions) {
+        if (err) {
+            throw err;
+        }
+        res.json(subscriptions);
+    });
+});
+
+app.get('/api/subscriptions/:_id', function (req, res) {
+    Subscription.getSubscriptionById(req.params._id, function (err, subscription) {
+        if (err) {
+            throw err;
+        }
+        res.json(subscription);
+    });
+});
+
+app.post('/api/subscriptions', function (req, res) {
+    var subscription = req.body;
+    Subscription.addSubscription(subscription, function (err, subscription) {
+        if (err) {
+            throw err;
+        }
+        res.json(subscription);
+    });
+});
+
+app.put('/api/subscriptions/:_id', function (req, res) {
+    var id = req.params._id;
+    var subscription = req.body;
+    Subscription.updateSubscription(id, subscription, {}, function (err, subscription) {
+        if (err) {
+            throw err;
+        }
+        res.json(subscription);
+    });
+});
+
+app.delete('/api/subscriptions/:_id', function (req, res) {
+    var id = req.params._id;
+    Subscription.removeSubscription(id, function (err, subscription) {
+        if (err) {
+            throw err;
+        }
+        res.json(subscription);
+    });
 });
 
 // ============= genres ================
