@@ -104,10 +104,6 @@ app.delete('/api/posts/:_id', function (req, res) {
     });
 });
 
-app.post('/api/storePostData', function (req, res) {
-
-});
-
 
 // ============= subscriptions ================
 
@@ -130,13 +126,18 @@ app.get('/api/subscriptions/:_id', function (req, res) {
 });
 
 app.post('/api/subscriptions', function (req, res) {
-    var subscription = req.body;
-    Subscription.addSubscription(subscription, function (err, subscription) {
+    /** if u want to register a device clear site cache in Application tab 
+    * then refresh then click Enable Notification button
+    */
+    // console.log('130', req.body);
+    var subscription2 = req.body;
+    Subscription.addSubscription(subscription2, function (err, subscription) {
         if (err) {
             throw err;
         }
-        res.json(subscription);
+        res.status(201).json(subscription2);
     });
+
 });
 
 app.put('/api/subscriptions/:_id', function (req, res) {
