@@ -15,6 +15,17 @@ var postSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    rawLocation: {
+        lat: {
+            type: String,
+            default: "0"
+        },
+        lng: {
+            type: String,
+            default: "0"
+        }
+    }
+    ,
     image: {
         type: String,
         default: '/src/images/sf-boat.jpg'

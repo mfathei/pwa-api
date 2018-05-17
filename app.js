@@ -70,6 +70,10 @@ app.post('/api/posts', function(req, res) {
             id: fields.id,
             title: fields.title,
             location: fields.location,
+            rawLocation: {
+                lat: fields.rawLocationLat,
+                lng: fields.rawLocationLng
+            },
             image: imagePath + files.file.name // encodeURIComponent(file.name)
         };
         // console.log('post', post);
@@ -98,7 +102,7 @@ app.post('/api/posts', function(req, res) {
                             p256dh: sub.keys.p256dh
                         }
                     };
-                    console.log('104');
+
                     webpush.sendNotification(pushConfig,
                             JSON.stringify({ title: 'New Post', content: 'New Post added!', openUrl: '/help' })
                         )
