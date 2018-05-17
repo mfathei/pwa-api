@@ -6,6 +6,7 @@ var mongoose = require("mongoose");
 var formidable = require('formidable');
 var fs = require('fs');
 var fsextra = require('fs-extra');
+var webpush = require('web-push');
 
 var Genre = require('./models/genre');
 var Book = require('./models/book');
@@ -15,28 +16,28 @@ var Subscription = require('./models/subscription');
 // to parse body for POST requests
 app.use(bodyParser.json());
 // Allow CORS
-app.use(function (req, res, next) {
+app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
 
-var imageRealtivePath = '/mnt/f/PROGRAMMING/Progressive web apps/WORK/pwa-guide/public/upload/photos/';
+var imageRealtivePath = '/media/f/PROGRAMMING/Progressive web apps/WORK/pwa-guide/public/upload/photos/';
 var imagePath = '/upload/photos/';
 
 // Connect to Mongoose
 mongoose.connect("mongodb://localhost/bookstore");
 var db = mongoose.connection;
 
-app.get('/', function (req, res) {
+app.get('/', function(req, res) {
     res.send("Please use /api/posts");
 });
 
 
 // ============= posts =================
 
-app.get('/api/posts', function (req, res) {
-    Post.getPosts(function (err, posts) {
+app.get('/api/posts', function(req, res) {
+    Post.getPosts(function(err, posts) {
         if (err) {
             throw err;
         }
@@ -44,8 +45,8 @@ app.get('/api/posts', function (req, res) {
     });
 });
 
-app.get('/api/posts/:_id', function (req, res) {
-    Post.getPostById(req.params._id, function (err, post) {
+app.get('/api/posts/:_id', function(req, res) {
+    Post.getPostById(req.params._id, function(err, post) {
         if (err) {
             throw err;
         }
@@ -53,40 +54,73 @@ app.get('/api/posts/:_id', function (req, res) {
     });
 });
 
-app.post('/api/posts', function (req, res) {
+app.post('/api/posts', function(req, res) {
 
     var form = new formidable.IncomingForm();
-    form.parse(req, function (err, fields, files) {
+    form.parse(req, function(err, fields, files) {
         var oldpath = files.file.path;
         // var newpath = '/data/pwa-api/' + files.file.name;
         var newpath = imageRealtivePath + files.file.name;
-        fsextra.move(oldpath, newpath, function (err) {
-            if (err) throw err;
-            // res.write('File uploaded and moved!');
-            // res.end();
-        });
+        fsextra.move(oldpath, newpath)
+            .catch(function(err) {
+                console.log(err);
+            });
 
         var post = {
             id: fields.id,
             title: fields.title,
             location: fields.location,
-            image: imagePath + files.file.name// encodeURIComponent(file.name)
+            image: imagePath + files.file.name // encodeURIComponent(file.name)
         };
         // console.log('post', post);
-        Post.addPost(post, function (err, post) {
-            if (err) {
-                throw err;
-            }
-            res.status(201).json(post);
-        });
+        Post.addPost(post, function(err, post) {
+                if (err) {
+                    throw err;
+                }
+
+
+            }).then(function() {
+                webpush.setVapidDetails('mailto:oracle.dev10g@gmail.com', 'BLet4p6u28mtoXKDmbGx1eHtXxHb8zRRSruyP-I7Hl9z7a6mYZd33_ogVCkMIZ2fTT806Lb4XtkoE7ALHPBGoSM', '7LyjUQ65yhm4UD6cE46OHnlD04waK676mlgEqomf_vI');
+                console.log('84');
+                return Subscription.getSubscriptions(function(err, subscriptions) {
+                    if (err) {
+                        throw err;
+                    }
+                });
+
+            })
+            .then(function(subscriptions) {
+                console.log('subscriptions:', subscriptions);
+                console.log('94');
+                subscriptions.forEach(function(sub) {
+                    var pushConfig = {
+                        endpoint: sub.endpoint,
+                        keys: {
+                            auth: sub.keys.auth,
+                            p256dh: sub.keys.p256dh
+                        }
+                    };
+                    console.log('104');
+                    webpush.sendNotification(pushConfig,
+                            JSON.stringify({ title: 'New Post', content: 'New Post added!', openUrl: '/help' })
+                        )
+                        .catch(function(err) {
+                            console.log(err);
+                        })
+                });
+                res.status(201).json({ message: 'Data stored', id: fields.id });
+            })
+            .catch(function(err) {
+                res.status(500).json({ error: err });
+            });
     });
 
 });
 
-app.put('/api/posts/:_id', function (req, res) {
+app.put('/api/posts/:_id', function(req, res) {
     var id = req.params._id;
     var post = req.body;
-    Post.updatePost(id, post, {}, function (err, post) {
+    Post.updatePost(id, post, {}, function(err, post) {
         if (err) {
             throw err;
         }
@@ -94,9 +128,9 @@ app.put('/api/posts/:_id', function (req, res) {
     });
 });
 
-app.delete('/api/posts/:_id', function (req, res) {
+app.delete('/api/posts/:_id', function(req, res) {
     var id = req.params._id;
-    Post.removePost(id, function (err, post) {
+    Post.removePost(id, function(err, post) {
         if (err) {
             throw err;
         }
@@ -107,8 +141,8 @@ app.delete('/api/posts/:_id', function (req, res) {
 
 // ============= subscriptions ================
 
-app.get('/api/subscriptions', function (req, res) {
-    Subscription.getSubscriptions(function (err, subscriptions) {
+app.get('/api/subscriptions', function(req, res) {
+    Subscription.getSubscriptions(function(err, subscriptions) {
         if (err) {
             throw err;
         }
@@ -116,8 +150,8 @@ app.get('/api/subscriptions', function (req, res) {
     });
 });
 
-app.get('/api/subscriptions/:_id', function (req, res) {
-    Subscription.getSubscriptionById(req.params._id, function (err, subscription) {
+app.get('/api/subscriptions/:_id', function(req, res) {
+    Subscription.getSubscriptionById(req.params._id, function(err, subscription) {
         if (err) {
             throw err;
         }
@@ -125,13 +159,13 @@ app.get('/api/subscriptions/:_id', function (req, res) {
     });
 });
 
-app.post('/api/subscriptions', function (req, res) {
+app.post('/api/subscriptions', function(req, res) {
     /** if u want to register a device clear site cache in Application tab 
-    * then refresh then click Enable Notification button
-    */
+     * then refresh then click Enable Notification button
+     */
     // console.log('130', req.body);
     var subscription2 = req.body;
-    Subscription.addSubscription(subscription2, function (err, subscription) {
+    Subscription.addSubscription(subscription2, function(err, subscription) {
         if (err) {
             throw err;
         }
@@ -140,10 +174,10 @@ app.post('/api/subscriptions', function (req, res) {
 
 });
 
-app.put('/api/subscriptions/:_id', function (req, res) {
+app.put('/api/subscriptions/:_id', function(req, res) {
     var id = req.params._id;
     var subscription = req.body;
-    Subscription.updateSubscription(id, subscription, {}, function (err, subscription) {
+    Subscription.updateSubscription(id, subscription, {}, function(err, subscription) {
         if (err) {
             throw err;
         }
@@ -151,9 +185,9 @@ app.put('/api/subscriptions/:_id', function (req, res) {
     });
 });
 
-app.delete('/api/subscriptions/:_id', function (req, res) {
+app.delete('/api/subscriptions/:_id', function(req, res) {
     var id = req.params._id;
-    Subscription.removeSubscription(id, function (err, subscription) {
+    Subscription.removeSubscription(id, function(err, subscription) {
         if (err) {
             throw err;
         }
@@ -163,8 +197,8 @@ app.delete('/api/subscriptions/:_id', function (req, res) {
 
 // ============= genres ================
 
-app.get('/api/genres', function (req, res) {
-    Genre.getGenres(function (err, genres) {
+app.get('/api/genres', function(req, res) {
+    Genre.getGenres(function(err, genres) {
         if (err) {
             throw err;
         }
@@ -172,8 +206,8 @@ app.get('/api/genres', function (req, res) {
     });
 });
 
-app.get('/api/genres/:_id', function (req, res) {
-    Genre.getGenreById(req.params._id, function (err, genre) {
+app.get('/api/genres/:_id', function(req, res) {
+    Genre.getGenreById(req.params._id, function(err, genre) {
         if (err) {
             throw err;
         }
@@ -181,9 +215,9 @@ app.get('/api/genres/:_id', function (req, res) {
     });
 });
 
-app.post('/api/genres', function (req, res) {
+app.post('/api/genres', function(req, res) {
     var genre = req.body;
-    Genre.addGenre(genre, function (err, genre) {
+    Genre.addGenre(genre, function(err, genre) {
         if (err) {
             throw err;
         }
@@ -191,10 +225,10 @@ app.post('/api/genres', function (req, res) {
     });
 });
 
-app.put('/api/genres/:_id', function (req, res) {
+app.put('/api/genres/:_id', function(req, res) {
     var id = req.params._id;
     var genre = req.body;
-    Genre.updateGenre(id, genre, {}, function (err, genre) {
+    Genre.updateGenre(id, genre, {}, function(err, genre) {
         if (err) {
             throw err;
         }
@@ -202,9 +236,9 @@ app.put('/api/genres/:_id', function (req, res) {
     });
 });
 
-app.delete('/api/genres/:_id', function (req, res) {
+app.delete('/api/genres/:_id', function(req, res) {
     var id = req.params._id;
-    Genre.removeGenre(id, function (err, genre) {
+    Genre.removeGenre(id, function(err, genre) {
         if (err) {
             throw err;
         }
@@ -214,8 +248,8 @@ app.delete('/api/genres/:_id', function (req, res) {
 
 // ============= books ================
 
-app.get('/api/books', function (req, res) {
-    Book.getBooks(function (err, books) {
+app.get('/api/books', function(req, res) {
+    Book.getBooks(function(err, books) {
         if (err) {
             throw err;
         }
@@ -223,8 +257,8 @@ app.get('/api/books', function (req, res) {
     });
 });
 
-app.get('/api/books/:_id', function (req, res) {
-    Book.getBookById(req.params._id, function (err, book) {
+app.get('/api/books/:_id', function(req, res) {
+    Book.getBookById(req.params._id, function(err, book) {
         if (err) {
             throw err;
         }
@@ -232,9 +266,9 @@ app.get('/api/books/:_id', function (req, res) {
     });
 });
 
-app.post('/api/books', function (req, res) {
+app.post('/api/books', function(req, res) {
     var book = req.body;
-    Book.addBook(book, function (err, book) {
+    Book.addBook(book, function(err, book) {
         if (err) {
             throw err;
         }
@@ -242,10 +276,10 @@ app.post('/api/books', function (req, res) {
     });
 });
 
-app.put('/api/books/:_id', function (req, res) {
+app.put('/api/books/:_id', function(req, res) {
     var id = req.params._id;
     var book = req.body;
-    Book.updateBook(id, book, {}, function (err, book) {
+    Book.updateBook(id, book, {}, function(err, book) {
         if (err) {
             throw err;
         }
@@ -253,9 +287,9 @@ app.put('/api/books/:_id', function (req, res) {
     });
 });
 
-app.delete('/api/books/:_id', function (req, res) {
+app.delete('/api/books/:_id', function(req, res) {
     var id = req.params._id;
-    Book.removeBook(id, function (err, book) {
+    Book.removeBook(id, function(err, book) {
         if (err) {
             throw err;
         }

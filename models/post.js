@@ -40,6 +40,7 @@ module.exports.getPostById = function (id, callback) {
 // Add Post
 module.exports.addPost = function (post, callback) {
     Post.create(post, callback);
+    return Promise.resolve(post);
 }
 
 // Update Post

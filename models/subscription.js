@@ -23,7 +23,9 @@ var Subscription = module.exports = mongoose.model('Subscription', subscriptionS
 
 // GET Subscriptions
 module.exports.getSubscriptions = function (callback, limit) {
-    Subscription.find(callback).limit(limit);
+    var query = Subscription.find(callback).limit(limit);
+    var promise = query.exec();
+    return promise;
 }
 
 // GET Subscription
