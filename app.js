@@ -81,7 +81,6 @@ app.post('/api/posts', function(req, res) {
 
             }).then(function() {
                 webpush.setVapidDetails('mailto:oracle.dev10g@gmail.com', 'BLet4p6u28mtoXKDmbGx1eHtXxHb8zRRSruyP-I7Hl9z7a6mYZd33_ogVCkMIZ2fTT806Lb4XtkoE7ALHPBGoSM', '7LyjUQ65yhm4UD6cE46OHnlD04waK676mlgEqomf_vI');
-                console.log('84');
                 return Subscription.getSubscriptions(function(err, subscriptions) {
                     if (err) {
                         throw err;
@@ -90,8 +89,7 @@ app.post('/api/posts', function(req, res) {
 
             })
             .then(function(subscriptions) {
-                console.log('subscriptions:', subscriptions);
-                console.log('94');
+                // console.log('subscriptions:', subscriptions);
                 subscriptions.forEach(function(sub) {
                     var pushConfig = {
                         endpoint: sub.endpoint,

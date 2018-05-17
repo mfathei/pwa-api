@@ -6,3 +6,9 @@ Generate vapid keys
 
 Run the app
 `nodemon app`
+
+If you got error MismatchSenderId
+make sure you have the same public id in
+front end : pwa-guide app.js line 71
+same as 
+back end : pwa-api app.js line 83
